@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eres mi universo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --vacio: #02030a;
+    --luz: #f3f1ff;
+    --azul: #8bb8ff;
+    --brasa: #ff9d62;
+    --oro: #ffe0a8;
+    --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    min-height: 100vh;
+    background: var(--vacio);
+    color: var(--luz);
+    font-family: var(--serif);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Fondo: la misma imagen, oscurecida, fija detrás de todo */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(rgba(2, 3, 10, 0.45), rgba(2, 3, 10, 0.45)),
+      url("fondo.png") center / cover no-repeat;
+  }
+
+  /* ---------- Título ---------- */
+  .portada {
+    text-align: center;
+    padding: clamp(40px, 9vh, 90px) 20px 26px;
+  }
+
+  .titulo {
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(2.6rem, 11vw, 5.2rem);
+    letter-spacing: 0.04em;
+    line-height: 1.05;
+    background: linear-gradient(180deg, #ffffff 20%, #b9d3ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter:
+      drop-shadow(0 0 10px rgba(139, 184, 255, 0.55))
+      drop-shadow(0 0 32px rgba(139, 184, 255, 0.35));
+  }
+
+  .pista {
+    margin-top: 14px;
+    font-size: clamp(1.05rem, 3.6vw, 1.3rem);
+    font-style: italic;
+    font-weight: 300;
+    color: rgba(243, 241, 255, 0.75);
+  }
+
+  .contador {
+    margin-top: 6px;
+    font-size: 1rem;
+    color: var(--oro);
+    min-height: 1.4em;
+    transition: opacity 0.4s;
+  }
+
+  /* ---------- Cielo (la imagen) ---------- */
+  .cielo {
+    position: relative;
+    width: min(92vw, 520px);
+    margin: 0 auto 70px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(139, 184, 255, 0.25),
+      0 0 60px rgba(139, 184, 255, 0.18);
+  }
+
+  .cielo > img {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* Estrellas señaladas */
+  .estrella {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    transform: translate(-50%, -50%);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 50%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .estrella::before,
+  .estrella::after {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 224, 168, 0.95);
+    box-shadow: 0 0 12px rgba(255, 224, 168, 0.7);
+    animation: latido 2.4s ease-out infinite;
+  }
+  .estrella::after { animation-delay: 1.2s; }
+
+  @keyframes latido {
+    0%   { transform: scale(0.55); opacity: 0.95; }
+    100% { transform: scale(1.5);  opacity: 0; }
+  }
+
+  .estrella:hover::before,
+  .estrella:focus-visible::before {
+    border-color: #ffffff;
+  }
+
+  .estrella:focus-visible {
+    outline: 2px solid var(--azul);
+    outline-offset: 2px;
+  }
+
+  /* Estrella ya leída: anillo fijo y tenue */
+  .estrella.leida::before {
+    animation: none;
+    transform: none;
+    opacity: 0.55;
+    border-color: rgba(139, 184, 255, 0.9);
+    box-shadow: 0 0 10px rgba(139, 184, 255, 0.6);
+  }
+  .estrella.leida::after { display: none; }
+
+  /* ---------- Ventana de mensaje dentro de la imagen ---------- */
+  .velo {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 3, 10, 0.6);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.35s ease, visibility 0.35s;
+  }
+  .velo.abierto {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .ventana {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.94);
+    width: min(84%, 380px);
+    padding: 34px 26px 24px;
+    text-align: center;
+    border-radius: 12px;
+    background: rgba(5, 8, 22, 0.88);
+    border: 1px solid rgba(139, 184, 255, 0.45);
+    box-shadow: 0 0 40px rgba(139, 184, 255, 0.28);
+    transition: transform 0.35s ease;
+  }
+  .velo.abierto .ventana {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .ventana p {
+    font-size: clamp(1.45rem, 5.4vw, 1.85rem);
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1.35;
+    color: var(--luz);
+    text-shadow: 0 0 14px rgba(139, 184, 255, 0.45);
+  }
+
+  .cerrar {
+    margin-top: 22px;
+    padding: 8px 22px;
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-style: italic;
+    color: var(--oro);
+    background: transparent;
+    border: 1px solid rgba(255, 224, 168, 0.6);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
+  }
+  .cerrar:hover,
+  .cerrar:focus-visible {
+    background: rgba(255, 224, 168, 0.16);
+    color: #fff;
+    outline: none;
+  }
+
+  /* ---------- Carta final ---------- */
+  .final {
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+  .final.visible { opacity: 1; }
+
+  .carta {
+    width: min(92vw, 460px);
+    perspective: 1400px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .carta:focus-visible {
+    outline: 2px solid var(--azul);
+    outline-offset: 6px;
+    border-radius: 16px;
+  }
+
+  .carta-giro {
+    display: grid;
+    min-height: clamp(470px, 72vh, 580px);
+    transform-style: preserve-3d;
+    transition: transform 1.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .carta.abierta .carta-giro { transform: rotateY(180deg); }
+
+  .cara {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 36px 28px;
+    border-radius: 16px;
+    border: 1px solid rgba(139, 184, 255, 0.4);
+    box-shadow: 0 0 50px rgba(139, 184, 255, 0.22);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .frente {
+    background-image:
+      linear-gradient(rgba(2, 3, 10, 0.2), rgba(2, 3, 10, 0.2)),
+      url("fondo.png");
+  }
+
+  .dorso {
+    transform: rotateY(180deg);
+    background-image:
+      linear-gradient(rgba(2, 3, 10, 0.68), rgba(2, 3, 10, 0.68)),
+      url("fondo.png");
+  }
+
+  .sello {
+    width: 112px;
+    height: 112px;
+    filter:
+      drop-shadow(0 0 8px rgba(255, 224, 168, 0.8))
+      drop-shadow(0 0 24px rgba(139, 184, 255, 0.6));
+    animation: respirar 3.2s ease-in-out infinite;
+  }
+  @keyframes respirar {
+    0%, 100% { transform: scale(0.95); }
+    50%      { transform: scale(1.06); }
+  }
+
+  .toca {
+    margin-top: 22px;
+    font-size: 1.35rem;
+    font-style: italic;
+    font-weight: 300;
+    color: var(--oro);
+    text-shadow: 0 0 12px rgba(255, 224, 168, 0.5);
+  }
+
+  .dorso p {
+    font-size: clamp(1.3rem, 4.6vw, 1.65rem);
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1.45;
+    color: var(--luz);
+    text-shadow: 0 0 14px rgba(139, 184, 255, 0.4);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 1.4s ease, transform 1.4s ease;
+  }
+  .dorso p + p { margin-top: 1.1em; }
+
+  .carta.abierta .dorso p { opacity: 1; transform: none; }
+  .carta.abierta .dorso p:nth-child(1) { transition-delay: 0.9s; }
+  .carta.abierta .dorso p:nth-child(2) { transition-delay: 2.1s; }
+  .carta.abierta .dorso p:nth-child(3) { transition-delay: 3.3s; }
+
+  /* ---------- Movimiento reducido ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .estrella::before, .estrella::after, .sello { animation: none; }
+    .estrella::before { transform: none; opacity: 0.8; }
+    .estrella::after { display: none; }
+    .carta-giro, .final, .velo, .ventana,
+    .dorso p { transition-duration: 0.01s; transition-delay: 0s !important; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="portada">
+    <h1 class="titulo">Eres mi universo</h1>
+    <p class="pista">Toca las estrellas que brillan</p>
+    <p class="contador" id="contador" aria-live="polite"></p>
+  </header>
+
+  <main>
+    <section class="cielo" id="cielo">
+      <img src="fondo.png" alt="Miles de galaxias y estrellas brillando en el espacio profundo">
+
+      <!-- Estrellas reales de la imagen (posición en % del ancho y alto) -->
+      <button class="estrella" style="left:58.4%; top:11.1%;" data-msg="Mi estrella del norte que me guía" aria-label="Estrella: mensaje"></button>
+      <button class="estrella" style="left:51.6%; top:50.7%;" data-msg="Mi sol, porque organizas todo lo que soy y todo lo que hago" aria-label="Estrella: mensaje"></button>
+      <button class="estrella" style="left:42.7%; top:43.2%;" data-msg="Sirio, pues eres la más brillante de entre todas" aria-label="Estrella: mensaje"></button>
+
+      <!-- Ventana dentro de la imagen -->
+      <div class="velo" id="velo">
+        <div class="ventana" id="ventana" role="dialog" aria-modal="true" aria-labelledby="texto">
+          <p id="texto"></p>
+          <button class="cerrar" id="cerrar" type="button">Cerrar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Carta final: aparece cuando se leen las 3 estrellas -->
+    <section class="final" id="final" hidden>
+      <div class="carta" id="carta" role="button" tabindex="0" aria-label="Toca la carta para abrirla">
+        <div class="carta-giro">
+
+          <div class="cara frente">
+            <svg class="sello" viewBox="-60 -60 120 120" aria-hidden="true">
+              <g stroke="#ffe0a8" stroke-linecap="round" fill="none">
+                <line x1="0" y1="-54" x2="0" y2="54" stroke-width="2"/>
+                <line x1="-54" y1="0" x2="54" y2="0" stroke-width="2"/>
+                <line x1="-34" y1="-34" x2="34" y2="34" stroke-width="1.2"/>
+                <line x1="34" y1="-34" x2="-34" y2="34" stroke-width="1.2"/>
+              </g>
+              <circle r="9" fill="#ffffff"/>
+              <circle r="15" fill="none" stroke="#8bb8ff" stroke-width="1.5"/>
+            </svg>
+            <p class="toca">Toca la carta</p>
+          </div>
+
+          <div class="cara dorso">
+            <p>Eres mi cielo, mi musa, mi heroína, una adicción tan grande que no es comparable con nada ni nadie más.</p>
+            <p>Quiero que siempre ilumines mis días y que siempre estés a mi lado.</p>
+            <p>Solo te amo a ti, y eso nunca cambiará.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+(function () {
+  var estrellas = document.querySelectorAll(".estrella");
+  var cielo     = document.getElementById("cielo");
+  var velo      = document.getElementById("velo");
+  var ventana   = document.getElementById("ventana");
+  var texto     = document.getElementById("texto");
+  var cerrar    = document.getElementById("cerrar");
+  var contador  = document.getElementById("contador");
+  var final     = document.getElementById("final");
+  var carta     = document.getElementById("carta");
+
+  var total = estrellas.length;
+  var leidas = 0;
+  var activa = null;
+  var cartaMostrada = false;
+
+  var reducido = window.matchMedia &&
+                 window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function actualizarContador() {
+    if (leidas === 0) { contador.textContent = ""; return; }
+    contador.textContent = leidas < total
+      ? "Estrellas descubiertas: " + leidas + " de " + total
+      : "Las descubriste todas";
+  }
+
+  // Coloca la ventana en la parte de la imagen que se ve en pantalla
+  function colocarVentana() {
+    var r = cielo.getBoundingClientRect();
+    var alto = ventana.offsetHeight;
+    var centro = window.innerHeight / 2 - r.top;
+    var min = alto / 2 + 12;
+    var max = r.height - alto / 2 - 12;
+    if (max < min) { max = min; }
+    centro = Math.max(min, Math.min(max, centro));
+    ventana.style.top = centro + "px";
+  }
+
+  function abrir(boton) {
+    activa = boton;
+    texto.textContent = boton.getAttribute("data-msg");
+    colocarVentana();
+    velo.classList.add("abierto");
+    cerrar.focus({ preventScroll: true });
+  }
+
+  function cerrarVentana() {
+    if (!activa) { return; }
+    var boton = activa;
+    activa = null;
+    velo.classList.remove("abierto");
+
+    if (!boton.classList.contains("leida")) {
+      boton.classList.add("leida");
+      leidas++;
+      actualizarContador();
+    }
+    boton.focus({ preventScroll: true });
+
+    if (leidas === total && !cartaMostrada) {
+      cartaMostrada = true;
+      mostrarCarta();
+    }
+  }
+
+  function mostrarCarta() {
+    setTimeout(function () {
+      final.hidden = false;
+      // pequeña espera para que el navegador calcule el diseño antes de animar
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          final.classList.add("visible");
+          final.scrollIntoView({ behavior: reducido ? "auto" : "smooth", block: "start" });
+          carta.focus({ preventScroll: true });
+        });
+      });
+    }, 700);
+  }
+
+  function abrirCarta() {
+    if (carta.classList.contains("abierta")) { return; }
+    carta.classList.add("abierta");
+    carta.removeAttribute("tabindex");
+    carta.removeAttribute("role");
+    carta.removeAttribute("aria-label");
+    carta.style.cursor = "default";
+  }
+
+  estrellas.forEach(function (b) {
+    b.addEventListener("click", function () { abrir(b); });
+  });
+
+  cerrar.addEventListener("click", cerrarVentana);
+
+  // Tocar el fondo oscuro (fuera de la ventana) también cierra
+  velo.addEventListener("click", function (e) {
+    if (e.target === velo) { cerrarVentana(); }
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { cerrarVentana(); }
+  });
+
+  window.addEventListener("resize", function () {
+    if (activa) { colocarVentana(); }
+  });
+
+  carta.addEventListener("click", abrirCarta);
+  carta.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      abrirCarta();
+    }
+  });
+})();
+</script>
+</body>
+</html>
